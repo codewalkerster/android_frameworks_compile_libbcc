@@ -44,6 +44,9 @@ include $(BUILD_HOST_EXECUTABLE)
 # ========================================================
 include $(CLEAR_VARS)
 
+ifeq ($(BOARD_USES_PVR_RSC),true)
+LOCAL_STATIC_LIBRARIES := libLLVMSupport
+endif
 LOCAL_MODULE := bcc
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := EXECUTABLES

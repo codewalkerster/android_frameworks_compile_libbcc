@@ -43,6 +43,9 @@ private:
   unsigned mCompilerVersion;
 
   OptimizationLevel mOptimizationLevel;
+#ifdef PVR_RSC
+  const char *mPreferredLibrary;
+#endif
 
 private:
   // This will be invoked when the containing source has been reset.
@@ -71,6 +74,13 @@ public:
 
   OptimizationLevel getOptimizationLevel() const
   {  return mOptimizationLevel; }
+#ifdef PVR_RSC
+  void setPreferredLibrary(const char *pPreferredLibrary)
+  { mPreferredLibrary = pPreferredLibrary; }
+
+  const char *getPreferredLibrary() const
+  { return mPreferredLibrary; }
+#endif
 };
 
 } // end namespace bcc

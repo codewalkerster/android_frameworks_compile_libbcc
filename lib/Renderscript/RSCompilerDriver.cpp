@@ -17,6 +17,9 @@
 #include "bcc/Renderscript/RSCompilerDriver.h"
 
 #include <llvm/Support/Path.h>
+#ifdef PVR_RSC
+#include <llvm/Support/PluginLoader.h>
+#endif
 
 #include "bcinfo/BitcodeWrapper.h"
 
@@ -60,7 +63,11 @@ bool is_force_recompile() {
 
 } // end anonymous namespace
 
+#ifdef PVR_RSC
+RSCompilerDriver::RSCompilerDriver() : mConfig(NULL), mCompiler(), mDefaultTriple(NULL), mDefaultLibrary(NULL) {
+#else
 RSCompilerDriver::RSCompilerDriver() : mConfig(NULL), mCompiler() {
+#endif
   init::Initialize();
   // Chain the symbol resolvers for BCC runtimes and RS runtimes.
   mResolver.chainResolver(mBCCRuntime);
@@ -158,7 +165,14 @@ bool RSCompilerDriver::setupConfig(const RSScript &pScript) {
     }
   } else {
     // Haven't run the compiler ever.
+#ifdef PVR_RSC
+    if (mDefaultTriple) // Preference the default triple if set through setRSDefaultCompilerTriple
+      mConfig = new (std::nothrow) CompilerConfig(mDefaultTriple);
+    else
+      mConfig = new (std::nothrow) DefaultCompilerConfig();
+#else
     mConfig = new (std::nothrow) DefaultCompilerConfig();
+#endif
     if (mConfig == NULL) {
       // Return false since mConfig remains NULL and out-of-memory.
       return false;
@@ -189,6 +203,11 @@ RSCompilerDriver::compileScript(RSScript &pScript,
   RSExecutable *result = NULL;
   RSInfo *info = NULL;
 
+#ifdef PVR_RSC
+  if (mDefaultLibrary) {
+	pScript.setPreferredLibrary(mDefaultLibrary);
+  }
+#endif
   //===--------------------------------------------------------------------===//
   // Extract RS-specific information from source bitcode.
   //===--------------------------------------------------------------------===//
@@ -404,3 +423,9 @@ RSExecutable *RSCompilerDriver::build(BCCContext &pContext,
 
   return result;
 }
+#ifdef PVR_RSC
+void
+RSCompilerDriver::loadPlugin(const char *pLibName) {
+  llvm::PluginLoader() = pLibName;
+}
+#endif

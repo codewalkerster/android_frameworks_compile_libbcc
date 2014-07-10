@@ -16,6 +16,9 @@
 
 #include "bcc/Renderscript/RSCompiler.h"
 
+#if defined(PVR_RSC)
+#include <llvm/ADT/Triple.h>
+#endif
 #include <llvm/Module.h>
 #include <llvm/PassManager.h>
 #include <llvm/Transforms/IPO.h>
@@ -29,7 +32,13 @@
 
 using namespace bcc;
 
+#if defined(PVR_RSC)
+bool RSCompiler::beforeAddLTOPasses(Script &pScript,
+                                    llvm::PassManager &pPM,
+                                    const char *mTriple) {
+#else
 bool RSCompiler::beforeAddLTOPasses(Script &pScript, llvm::PassManager &pPM) {
+#endif
   // Add a pass to internalize the symbols that don't need to have global
   // visibility.
   RSScript &script = static_cast<RSScript &>(pScript);
@@ -64,7 +73,9 @@ bool RSCompiler::beforeAddLTOPasses(Script &pScript, llvm::PassManager &pPM) {
     export_symbols.push_back(*export_func_iter);
   }
 
-  // Expanded foreach functions should not be internalized, too.
+  // If compiling for CPU, expanded foreach functions should not be
+  // internalized, if compiling for PVR, foreach functions should not be
+  // internalized instead, and there is no need to expand them.
   const RSInfo::ExportForeachFuncListTy &export_foreach_func =
       info->getExportForeachFuncs();
   std::vector<std::string> expanded_foreach_funcs;
@@ -73,6 +84,11 @@ bool RSCompiler::beforeAddLTOPasses(Script &pScript, llvm::PassManager &pPM) {
            foreach_func_end = export_foreach_func.end();
        foreach_func_iter != foreach_func_end; foreach_func_iter++) {
     std::string name(foreach_func_iter->first);
+#if defined(PVR_RSC)
+    if (!strncmp(mTriple, llvm::Triple::getArchTypeName(llvm::Triple::usc), 3))
+      expanded_foreach_funcs.push_back(name);
+    else
+#endif
     expanded_foreach_funcs.push_back(name.append(".expand"));
   }
 
@@ -87,8 +103,14 @@ bool RSCompiler::beforeAddLTOPasses(Script &pScript, llvm::PassManager &pPM) {
   return true;
 }
 
+#if defined(PVR_RSC)
+bool RSCompiler::beforeExecuteLTOPasses(Script &pScript,
+                                        llvm::PassManager &pPM,
+                                        const char *mTriple) {
+#else
 bool RSCompiler::beforeExecuteLTOPasses(Script &pScript,
                                         llvm::PassManager &pPM) {
+#endif
   // Execute a pass to expand foreach-able functions
   llvm::PassManager rs_passes;
 
@@ -103,9 +125,17 @@ bool RSCompiler::beforeExecuteLTOPasses(Script &pScript,
     return false;
   }
 
+#if defined(PVR_RSC)
+  // Expand ForEach on CPU path to reduce launch overhead
+  // (if not compiling for PVR).
+  if (strncmp(mTriple, llvm::Triple::getArchTypeName(llvm::Triple::usc), 3))
+    rs_passes.add(createRSForEachExpandPass(info->getExportForeachFuncs(),
+                                            /* pEnableStepOpt */ true));
+#else
   // Expand ForEach on CPU path to reduce launch overhead.
   rs_passes.add(createRSForEachExpandPass(info->getExportForeachFuncs(),
                                           /* pEnableStepOpt */ true));
+#endif
 
   // Execute the pass.
   rs_passes.run(module);

@@ -88,6 +88,10 @@ public:
   // Interfaces to ObjectLoader
   inline void *getSymbolAddress(const char *pName) const
   { return mLoader->getSymbolAddress(pName); }
+#ifdef PVR_RSC
+  size_t retrieveObjFileSize() const;
+  bool   retrieveObjFile(void *pDst, size_t uDataLen);
+#endif
 
   bool syncInfo(bool pForce = false);
 

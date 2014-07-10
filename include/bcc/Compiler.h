@@ -107,17 +107,31 @@ protected:
   // Plugin callbacks for sub-class.
   //===--------------------------------------------------------------------===//
   // Called before adding first pass to code-generation passes.
+#ifdef PVR_RSC
+  virtual bool beforeAddLTOPasses(Script &pScript,
+                                  llvm::PassManager &pPM,
+                                  const char *mTriple)
+  { return true; }
+#else
   virtual bool beforeAddLTOPasses(Script &pScript, llvm::PassManager &pPM)
   { return true; }
+#endif
 
   // Called after adding last pass to code-generation passes.
   virtual bool afterAddLTOPasses(Script &pScript, llvm::PassManager &pPM)
   { return true; }
 
   // Called before executing code-generation passes.
+#ifdef PVR_RSC
+  virtual bool beforeExecuteLTOPasses(Script &pScript,
+                                          llvm::PassManager &pPM,
+                                          const char *mTriple)
+  { return true; }
+#else
   virtual bool beforeExecuteLTOPasses(Script &pScript,
                                           llvm::PassManager &pPM)
   { return true; }
+#endif
 
   // Called after executing code-generation passes.
   virtual bool afterExecuteLTOPasses(Script &pScript)

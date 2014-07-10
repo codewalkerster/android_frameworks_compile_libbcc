@@ -24,6 +24,9 @@
 #include "bcc/ExecutionEngine/SymbolResolverProxy.h"
 
 #include <utils/String8.h>
+#ifdef PVR_RSC
+#include <utils/FileMap.h>
+#endif
 
 using namespace bcc;
 
@@ -124,6 +127,48 @@ RSExecutable *RSExecutable::Create(RSInfo &pInfo,
   return result;
 }
 
+#ifdef PVR_RSC
+size_t RSExecutable::retrieveObjFileSize() const {
+  return mObjFile->getSize();
+}
+
+bool RSExecutable::retrieveObjFile(void *pDst, size_t uDataLen) {
+  if(!pDst || !uDataLen)
+    return false;
+
+  size_t file_size;
+  android::FileMap *file_map = NULL;
+
+  // Check the inputs.
+  if (mObjFile->hasError()) {
+    return false;
+  }
+
+  // Get the file size.
+  file_size = mObjFile->getSize();
+  if (mObjFile->hasError()) {
+    return false;
+  }
+
+  // Abort on empty file or not enough space
+  if (file_size <= 0 || file_size > uDataLen) {
+    return false;
+  }
+
+  // Create memory map for the input file.
+  file_map = mObjFile->createMap(0, file_size, /* pIsReadOnly */true);
+  if ((file_map == NULL) || mObjFile->hasError())  {
+    return false;
+  }
+
+  // Copy data to output ptr
+  memcpy(pDst, file_map->getDataPtr(), file_size);
+
+  // file_map is no longer needed
+  file_map->release();
+  return true;
+}
+#endif
 bool RSExecutable::syncInfo(bool pForce) {
   if (!pForce && !mIsInfoDirty) {
     return true;

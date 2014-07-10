@@ -23,8 +23,17 @@ namespace bcc {
 
 class RSCompiler : public Compiler {
 private:
+#ifdef PVR_RSC
+  virtual bool beforeAddLTOPasses(Script &pScript,
+                                  llvm::PassManager &pPM,
+                                  const char *mTriple);
+  virtual bool beforeExecuteLTOPasses(Script &pScript,
+                                      llvm::PassManager &pPM,
+                                      const char *mTriple);
+#else
   virtual bool beforeAddLTOPasses(Script &pScript, llvm::PassManager &pPM);
   virtual bool beforeExecuteLTOPasses(Script &pScript, llvm::PassManager &pPM);
+#endif
 };
 
 } // end namespace bcc

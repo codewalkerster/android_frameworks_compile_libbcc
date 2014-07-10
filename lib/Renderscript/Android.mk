@@ -38,6 +38,10 @@ libbcc_renderscript_SRC_FILES := \
 
 include $(CLEAR_VARS)
 
+ifeq ($(BOARD_USES_PVR_RSC),true)
+LOCAL_CFLAGS += -DPVR_RSC
+endif
+
 LOCAL_MODULE := libbccRenderscript
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := STATIC_LIBRARIES
@@ -55,6 +59,10 @@ include $(BUILD_STATIC_LIBRARY)
 #=====================================================================
 
 include $(CLEAR_VARS)
+
+ifeq ($(BOARD_USES_PVR_RSC),true)
+LOCAL_CFLAGS += -DPVR_RSC
+endif
 
 LOCAL_MODULE := libbccRenderscript
 LOCAL_MODULE_TAGS := optional

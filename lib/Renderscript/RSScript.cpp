@@ -37,6 +37,11 @@ bool RSScript::LinkRuntime(RSScript &pScript) {
   }
 #endif
 
+#ifdef PVR_RSC
+  if (pScript.getPreferredLibrary()) {
+    core_lib = pScript.getPreferredLibrary();
+  }
+#endif
   Source *libclcore_source = Source::CreateFromFile(context, core_lib);
   if (libclcore_source == NULL) {
     ALOGE("Failed to load Renderscript library '%s' to link!", core_lib);
@@ -55,11 +60,18 @@ bool RSScript::LinkRuntime(RSScript &pScript) {
 
 RSScript::RSScript(Source &pSource)
   : Script(pSource), mInfo(NULL), mCompilerVersion(0),
+#ifdef PVR_RSC
+    mOptimizationLevel(kOptLvl3), mPreferredLibrary(NULL) { }
+#else
     mOptimizationLevel(kOptLvl3) { }
+#endif
 
 bool RSScript::doReset() {
   mInfo = NULL;
   mCompilerVersion = 0;
   mOptimizationLevel = kOptLvl3;
+#ifdef PVR_RSC
+  mPreferredLibrary = NULL;
+#endif
   return true;
 }

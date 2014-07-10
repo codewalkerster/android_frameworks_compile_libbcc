@@ -44,6 +44,10 @@ libmcld_STATIC_LIBRARIES += \
 
 include $(CLEAR_VARS)
 
+ifeq ($(BOARD_USES_PVR_RSC),true)
+LOCAL_CFLAGS += -DPVR_RSC
+endif
+
 LOCAL_MODULE := libbcc.sha1
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
